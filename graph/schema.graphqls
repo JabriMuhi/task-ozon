@@ -8,6 +8,7 @@ type Link {
 type Query {
   links: [Link!]!
   getPost(postId: Int!): Post
+  getPosts(page: Int!, itemsByPage: Int!): [Post]
 }
 
 input NewLink {
@@ -35,7 +36,9 @@ type Mutation {
   login(input: Login!): String!
   # we'll talk about this in authentication section
   refreshToken(input: RefreshTokenInput!): String!
-  addPost(title: String!, content: String!, commentsAllowed: Boolean!, userId: Int!): Post
+  addPost(title: String!, content: String!, commentsAllowed: Boolean!, userId: Int!): Int!
+  changeCommentsAllowed(postID: Int!, commentsAllowed: Boolean!): Int!
+  deletePost(postId: Int!): Int!
   addComment(postId: Int!, parentId: Int, content: String!): Comment
   toggleCommentsAllowed(postId: Int!, commentsAllowed: Boolean!): Post
 }

@@ -8,8 +8,6 @@ import (
 	"context"
 	"fmt"
 	"taskOzon/graph/model"
-	"taskOzon/internal"
-	"taskOzon/internal/service"
 )
 
 // CreateLink is the resolver for the createLink field.
@@ -39,12 +37,22 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 }
 
 // AddPost is the resolver for the addPost field.
-func (r *mutationResolver) AddPost(ctx context.Context, title string, content string, commentsAllowed bool, userID int) (*model.Post, error) {
+func (r *mutationResolver) AddPost(ctx context.Context, title string, content string, commentsAllowed bool, userID int) (int, error) {
 	//postService := service.InitPostService()
 	//postDao := dao.NewPostDao(r.DB)
 	//post, _ := postDao.GetPost(ctx, uint32(postID))
 	//return &post, nil
-	return nil, nil
+	return r.PostService.AddPost(ctx, title, content, userID, commentsAllowed)
+}
+
+// ChangeCommentsAllowed is the resolver for the changeCommentsAllowed field.
+func (r *mutationResolver) ChangeCommentsAllowed(ctx context.Context, postID int, commentsAllowed bool) (int, error) {
+	return r.PostService.ChangeCommentsAllowed(ctx, postID, commentsAllowed)
+}
+
+// DeletePost is the resolver for the deletePost field.
+func (r *mutationResolver) DeletePost(ctx context.Context, postID int) (int, error) {
+	return r.PostService.DeletePost(ctx, postID)
 }
 
 // AddComment is the resolver for the addComment field.
@@ -71,32 +79,34 @@ func (r *queryResolver) Links(ctx context.Context) ([]*model.Link, error) {
 
 // GetPost is the resolver for the getPost field.
 func (r *queryResolver) GetPost(ctx context.Context, postID int) (*model.Post, error) {
-	customContext := internal.GetContext(ctx)
-	postService := service.InitPostService(customContext.DB)
-	return postService.GetPost(ctx, uint32(postID))
+	return r.PostService.GetPost(ctx, postID)
 	//postDao := dao.NewPostDao(r.DB)
 	//post, _ := postDao.GetPost(ctx, uint32(postID))
 	//return &post, nil
 }
 
+// GetPosts is the resolver for the getPosts field.
+func (r *queryResolver) GetPosts(ctx context.Context, page int, itemsByPage int) ([]*model.Post, error) {
+	return r.PostService.GetPosts(ctx, page, itemsByPage)
+}
+
 // CommentAdded is the resolver for the commentAdded field.
 func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID int) (<-chan *model.Comment, error) {
 	commentChan := make(chan *model.Comment)
-	postMapID := uint32(postID)
 
 	r.mu.Lock()
-	if _, ok := r.commentObservers[postMapID]; !ok {
-		r.commentObservers[postMapID] = make(map[chan *model.Comment]struct{})
+	if _, ok := r.commentObservers[postID]; !ok {
+		r.commentObservers[postID] = make(map[chan *model.Comment]struct{})
 	}
-	r.commentObservers[postMapID][commentChan] = struct{}{}
+	r.commentObservers[postID][commentChan] = struct{}{}
 	r.mu.Unlock()
 
 	go func() {
 		<-ctx.Done()
 		r.mu.Lock()
-		delete(r.commentObservers[postMapID], commentChan)
-		if len(r.commentObservers[postMapID]) == 0 {
-			delete(r.commentObservers, postMapID)
+		delete(r.commentObservers[postID], commentChan)
+		if len(r.commentObservers[postID]) == 0 {
+			delete(r.commentObservers, postID)
 		}
 		r.mu.Unlock()
 		close(commentChan)
