@@ -8,6 +8,8 @@ import (
 	"context"
 	"fmt"
 	"taskOzon/graph/model"
+	"taskOzon/internal"
+	"taskOzon/internal/service"
 )
 
 // CreateLink is the resolver for the createLink field.
@@ -37,17 +39,21 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 }
 
 // AddPost is the resolver for the addPost field.
-func (r *mutationResolver) AddPost(ctx context.Context, title string, content string, commentsAllowed bool) (*model.Post, error) {
-	panic(fmt.Errorf("not implemented: AddPost - addPost"))
+func (r *mutationResolver) AddPost(ctx context.Context, title string, content string, commentsAllowed bool, userID int) (*model.Post, error) {
+	//postService := service.InitPostService()
+	//postDao := dao.NewPostDao(r.DB)
+	//post, _ := postDao.GetPost(ctx, uint32(postID))
+	//return &post, nil
+	return nil, nil
 }
 
 // AddComment is the resolver for the addComment field.
-func (r *mutationResolver) AddComment(ctx context.Context, postID string, parentID *string, content string) (*model.Comment, error) {
+func (r *mutationResolver) AddComment(ctx context.Context, postID int, parentID *int, content string) (*model.Comment, error) {
 	panic(fmt.Errorf("not implemented: AddComment - addComment"))
 }
 
 // ToggleCommentsAllowed is the resolver for the toggleCommentsAllowed field.
-func (r *mutationResolver) ToggleCommentsAllowed(ctx context.Context, postID string, commentsAllowed bool) (*model.Post, error) {
+func (r *mutationResolver) ToggleCommentsAllowed(ctx context.Context, postID int, commentsAllowed bool) (*model.Post, error) {
 	panic(fmt.Errorf("not implemented: ToggleCommentsAllowed - toggleCommentsAllowed"))
 }
 
@@ -63,23 +69,34 @@ func (r *queryResolver) Links(ctx context.Context) ([]*model.Link, error) {
 	return links, nil
 }
 
+// GetPost is the resolver for the getPost field.
+func (r *queryResolver) GetPost(ctx context.Context, postID int) (*model.Post, error) {
+	customContext := internal.GetContext(ctx)
+	postService := service.InitPostService(customContext.DB)
+	return postService.GetPost(ctx, uint32(postID))
+	//postDao := dao.NewPostDao(r.DB)
+	//post, _ := postDao.GetPost(ctx, uint32(postID))
+	//return &post, nil
+}
+
 // CommentAdded is the resolver for the commentAdded field.
-func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID uint32) (<-chan *model.Comment, error) {
+func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID int) (<-chan *model.Comment, error) {
 	commentChan := make(chan *model.Comment)
+	postMapID := uint32(postID)
 
 	r.mu.Lock()
-	if _, ok := r.commentObservers[postID]; !ok {
-		r.commentObservers[postID] = make(map[chan *model.Comment]struct{})
+	if _, ok := r.commentObservers[postMapID]; !ok {
+		r.commentObservers[postMapID] = make(map[chan *model.Comment]struct{})
 	}
-	r.commentObservers[postID][commentChan] = struct{}{}
+	r.commentObservers[postMapID][commentChan] = struct{}{}
 	r.mu.Unlock()
 
 	go func() {
 		<-ctx.Done()
 		r.mu.Lock()
-		delete(r.commentObservers[postID], commentChan)
-		if len(r.commentObservers[postID]) == 0 {
-			delete(r.commentObservers, postID)
+		delete(r.commentObservers[postMapID], commentChan)
+		if len(r.commentObservers[postMapID]) == 0 {
+			delete(r.commentObservers, postMapID)
 		}
 		r.mu.Unlock()
 		close(commentChan)

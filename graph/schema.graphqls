@@ -1,5 +1,5 @@
 type Link {
-  id: ID!
+  id: Int!
   title: String!
   address: String!
   user: User!
@@ -7,6 +7,7 @@ type Link {
 
 type Query {
   links: [Link!]!
+  getPost(postId: Int!): Post
 }
 
 input NewLink {
@@ -34,18 +35,18 @@ type Mutation {
   login(input: Login!): String!
   # we'll talk about this in authentication section
   refreshToken(input: RefreshTokenInput!): String!
-  addPost(title: String!, content: String!, commentsAllowed: Boolean!): Post
-  addComment(postId: ID!, parentId: ID, content: String!): Comment
-  toggleCommentsAllowed(postId: ID!, commentsAllowed: Boolean!): Post
+  addPost(title: String!, content: String!, commentsAllowed: Boolean!, userId: Int!): Post
+  addComment(postId: Int!, parentId: Int, content: String!): Comment
+  toggleCommentsAllowed(postId: Int!, commentsAllowed: Boolean!): Post
 }
 
 type User {
-  id: ID!
+  id: Int!
   username: String!
 }
 
 type Post {
-  id: ID!
+  id: Int!
   title: String!
   content: String!
   author: User!
@@ -54,14 +55,14 @@ type Post {
 }
 
 type Comment {
-  id: ID!
-  postId: ID!
-  parentId: ID
+  id: Int!
+  postId: Int!
+  parentId: Int
   content: String!
   author: User!
   children: [Comment]
 }
 
 type Subscription {
-  commentAdded(postID: ID!): Comment!
+  commentAdded(postID: Int!): Comment!
 }

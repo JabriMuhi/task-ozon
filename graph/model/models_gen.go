@@ -3,16 +3,16 @@
 package model
 
 type Comment struct {
-	ID       string     `json:"id"`
-	PostID   string     `json:"postId"`
-	ParentID *string    `json:"parentId,omitempty"`
+	ID       int        `json:"id"`
+	PostID   int        `json:"postId"`
+	ParentID *int       `json:"parentId,omitempty"`
 	Content  string     `json:"content"`
 	Author   *User      `json:"author"`
 	Children []*Comment `json:"children,omitempty"`
 }
 
 type Link struct {
-	ID      string `json:"id"`
+	ID      int    `json:"id"`
 	Title   string `json:"title"`
 	Address string `json:"address"`
 	User    *User  `json:"user"`
@@ -37,7 +37,7 @@ type NewUser struct {
 }
 
 type Post struct {
-	ID              string `json:"id"`
+	ID              int    `json:"id"`
 	Title           string `json:"title"`
 	Content         string `json:"content"`
 	Author          *User  `json:"author"`
@@ -55,6 +55,6 @@ type Subscription struct {
 }
 
 type User struct {
-	ID       string `json:"id"`
+	ID       int    `json:"id"`
 	Username string `json:"username"`
 }

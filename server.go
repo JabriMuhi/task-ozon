@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	generated "taskOzon/graph"
+	"taskOzon/internal"
+	"taskOzon/internal/service"
 	database "taskOzon/pkg/db/postgresql"
 	"time"
 )
@@ -32,7 +34,7 @@ func main() {
 	}()
 
 	// Create a new resolver and pass the database connection if needed
-	resolver := generated.NewResolver()
+	resolver := generated.NewResolver(service.InitPostService(db))
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	srv.AddTransport(transport.Websocket{
@@ -44,8 +46,14 @@ func main() {
 		KeepAlivePingInterval: 10 * time.Second,
 	})
 
+	srv.AddTransport(transport.POST{})
+
+	customCtx := &internal.CustomContext{
+		DB: db,
+	}
+
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	http.Handle("/query", internal.CreateContext(customCtx, srv))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
