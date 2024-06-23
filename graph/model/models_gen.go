@@ -18,22 +18,7 @@ type Link struct {
 	User    *User  `json:"user"`
 }
 
-type Login struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 type Mutation struct {
-}
-
-type NewLink struct {
-	Title   string `json:"title"`
-	Address string `json:"address"`
-}
-
-type NewUser struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
 }
 
 type Post struct {
@@ -47,14 +32,11 @@ type Post struct {
 type Query struct {
 }
 
-type RefreshTokenInput struct {
-	Token string `json:"token"`
-}
-
 type Subscription struct {
 }
 
 type User struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
+	Password string `json:"password"`
 }

@@ -9,43 +9,26 @@ type Query {
   links: [Link!]!
   getPost(postId: Int!): Post
   getPosts(page: Int!, itemsByPage: Int!): [Post]
-}
-
-input NewLink {
-  title: String!
-  address: String!
-}
-
-input RefreshTokenInput{
-  token: String!
-}
-
-input NewUser {
-  username: String!
-  password: String!
-}
-
-input Login {
-  username: String!
-  password: String!
+  getUser(userId: Int!): String!
 }
 
 type Mutation {
-  createLink(input: NewLink!): Link!
-  createUser(input: NewUser!): String!
-  login(input: Login!): String!
+  #createLink(input: NewLink!): Link!
+  addUser(username: String!, password: String!, email: String!): Int!
+  deleteUser(userId: Int!): Int!
+  #login(input: Login!): String!
   # we'll talk about this in authentication section
-  refreshToken(input: RefreshTokenInput!): String!
+  # refreshToken(input: RefreshTokenInput!): String!
   addPost(title: String!, content: String!, commentsAllowed: Boolean!, userId: Int!): Int!
-  changeCommentsAllowed(postID: Int!, commentsAllowed: Boolean!): Int!
+  changeCommentsAllowed(postId: Int!, commentsAllowed: Boolean!): Int!
   deletePost(postId: Int!): Int!
   addComment(postId: Int!, parentId: Int, content: String!): Comment
-  toggleCommentsAllowed(postId: Int!, commentsAllowed: Boolean!): Post
 }
 
 type User {
   id: Int!
   username: String!
+  password: String!
 }
 
 type Post {
@@ -53,7 +36,6 @@ type Post {
   title: String!
   content: String!
   author: User!
-#  comments: [Comment]
   commentsAllowed: Boolean!
 }
 

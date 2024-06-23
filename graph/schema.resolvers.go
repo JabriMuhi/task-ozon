@@ -10,30 +10,14 @@ import (
 	"taskOzon/graph/model"
 )
 
-// CreateLink is the resolver for the createLink field.
-func (r *mutationResolver) CreateLink(ctx context.Context, input model.NewLink) (*model.Link, error) {
-	var link model.Link
-	var user model.User
-	link.Address = input.Address
-	link.Title = input.Title
-	user.Username = "test"
-	link.User = &user
-	return &link, nil
+// AddUser is the resolver for the addUser field.
+func (r *mutationResolver) AddUser(ctx context.Context, username string, password string, email string) (int, error) {
+	return r.UserService.AddUser(ctx, username, password, email)
 }
 
-// CreateUser is the resolver for the createUser field.
-func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (string, error) {
-	panic(fmt.Errorf("not implemented: CreateUser - createUser"))
-}
-
-// Login is the resolver for the login field.
-func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string, error) {
-	panic(fmt.Errorf("not implemented: Login - login"))
-}
-
-// RefreshToken is the resolver for the refreshToken field.
-func (r *mutationResolver) RefreshToken(ctx context.Context, input model.RefreshTokenInput) (string, error) {
-	panic(fmt.Errorf("not implemented: RefreshToken - refreshToken"))
+// DeleteUser is the resolver for the deleteUser field.
+func (r *mutationResolver) DeleteUser(ctx context.Context, userID int) (int, error) {
+	return r.UserService.DeleteUser(ctx, userID)
 }
 
 // AddPost is the resolver for the addPost field.
@@ -60,11 +44,6 @@ func (r *mutationResolver) AddComment(ctx context.Context, postID int, parentID 
 	panic(fmt.Errorf("not implemented: AddComment - addComment"))
 }
 
-// ToggleCommentsAllowed is the resolver for the toggleCommentsAllowed field.
-func (r *mutationResolver) ToggleCommentsAllowed(ctx context.Context, postID int, commentsAllowed bool) (*model.Post, error) {
-	panic(fmt.Errorf("not implemented: ToggleCommentsAllowed - toggleCommentsAllowed"))
-}
-
 // Links is the resolver for the links field.
 func (r *queryResolver) Links(ctx context.Context) ([]*model.Link, error) {
 	var links []*model.Link
@@ -80,14 +59,16 @@ func (r *queryResolver) Links(ctx context.Context) ([]*model.Link, error) {
 // GetPost is the resolver for the getPost field.
 func (r *queryResolver) GetPost(ctx context.Context, postID int) (*model.Post, error) {
 	return r.PostService.GetPost(ctx, postID)
-	//postDao := dao.NewPostDao(r.DB)
-	//post, _ := postDao.GetPost(ctx, uint32(postID))
-	//return &post, nil
 }
 
 // GetPosts is the resolver for the getPosts field.
 func (r *queryResolver) GetPosts(ctx context.Context, page int, itemsByPage int) ([]*model.Post, error) {
 	return r.PostService.GetPosts(ctx, page, itemsByPage)
+}
+
+// GetUser is the resolver for the getUser field.
+func (r *queryResolver) GetUser(ctx context.Context, userID int) (string, error) {
+	return r.UserService.GetUser(ctx, userID)
 }
 
 // CommentAdded is the resolver for the commentAdded field.
