@@ -51,9 +51,11 @@ func (dao *PostDAO) GetPosts(ctx context.Context, page int, itemsByPage int) ([]
 	if err != nil {
 		return nil, fmt.Errorf("error fetching posts: %v", err)
 	}
+
 	defer rows.Close()
 
 	var posts []*model.Post
+
 	for rows.Next() {
 		var post model.Post
 		post.Author = &model.User{}
@@ -62,9 +64,11 @@ func (dao *PostDAO) GetPosts(ctx context.Context, page int, itemsByPage int) ([]
 		}
 		posts = append(posts, &post)
 	}
+
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating posts: %v", err)
 	}
+
 	return posts, nil
 }
 

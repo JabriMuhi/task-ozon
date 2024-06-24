@@ -33,7 +33,7 @@ func main() {
 	}()
 
 	// Create a new resolver and pass the database connection if needed
-	resolver := generated.NewResolver(service.InitPostService(db), service.InitUserService(db))
+	resolver := generated.NewResolver(service.InitPostService(db), service.InitUserService(db), service.InitCommentService(db))
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	srv.AddTransport(transport.Websocket{

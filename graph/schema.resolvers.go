@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"taskOzon/graph/model"
 )
 
@@ -40,8 +39,13 @@ func (r *mutationResolver) DeletePost(ctx context.Context, postID int) (int, err
 }
 
 // AddComment is the resolver for the addComment field.
-func (r *mutationResolver) AddComment(ctx context.Context, postID int, parentID *int, content string) (*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: AddComment - addComment"))
+func (r *mutationResolver) AddComment(ctx context.Context, postID int, content string, userID int) (int, error) {
+	return r.CommentService.AddComment(ctx, content, postID, userID)
+}
+
+// AddReply is the resolver for the addReply field.
+func (r *mutationResolver) AddReply(ctx context.Context, postID int, parentCommentID *int, userID int, content string) (int, error) {
+	return r.CommentService.AddReply(ctx, content, userID, *parentCommentID)
 }
 
 // Links is the resolver for the links field.
@@ -69,6 +73,38 @@ func (r *queryResolver) GetPosts(ctx context.Context, page int, itemsByPage int)
 // GetUser is the resolver for the getUser field.
 func (r *queryResolver) GetUser(ctx context.Context, userID int) (string, error) {
 	return r.UserService.GetUser(ctx, userID)
+}
+
+// GetPostComments is the resolver for the getPostComments field.
+func (r *queryResolver) GetPostComments(ctx context.Context, postID int, startLevel int, lastLevel int, limit int) ([]*model.Comment, error) {
+	c, err := r.CommentService.GetPostComments(ctx, postID, startLevel, lastLevel, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := make([]*model.Comment, 0)
+
+	for key, _ := range c {
+		resp = append(resp, &c[key])
+	}
+
+	return resp, nil
+}
+
+// GetChildrenComments is the resolver for the getChildrenComments field.
+func (r *queryResolver) GetChildrenComments(ctx context.Context, parentCommentID int, startLevel int, lastLevel int, limit int) ([]*model.Comment, error) {
+	c, err := r.CommentService.GetChildrenComments(ctx, parentCommentID, startLevel, lastLevel, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := make([]*model.Comment, 0)
+
+	for key, _ := range c {
+		resp = append(resp, &c[key])
+	}
+
+	return resp, nil
 }
 
 // CommentAdded is the resolver for the commentAdded field.

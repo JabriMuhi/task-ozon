@@ -10,6 +10,8 @@ type Query {
   getPost(postId: Int!): Post
   getPosts(page: Int!, itemsByPage: Int!): [Post]
   getUser(userId: Int!): String!
+  getPostComments(postId: Int!, startLevel: Int!, lastLevel: Int!, limit: Int!): [Comment]
+  getChildrenComments(parentCommentId: Int!, startLevel: Int!, lastLevel: Int!, limit: Int!): [Comment]
 }
 
 type Mutation {
@@ -22,7 +24,8 @@ type Mutation {
   addPost(title: String!, content: String!, commentsAllowed: Boolean!, userId: Int!): Int!
   changeCommentsAllowed(postId: Int!, commentsAllowed: Boolean!): Int!
   deletePost(postId: Int!): Int!
-  addComment(postId: Int!, parentId: Int, content: String!): Comment
+  addComment(postId: Int!, content: String!, userId: Int!): Int!
+  addReply(postId: Int!, parentCommentId: Int, userId: Int!, content: String!): Int!
 }
 
 type User {
