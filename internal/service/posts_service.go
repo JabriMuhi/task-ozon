@@ -4,16 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"taskOzon/graph/model"
-	"taskOzon/internal/dao"
+	"taskOzon/internal/dao/posts_dao"
+	"taskOzon/pkg/db/in_memory"
 )
 
 type PostServiceImpl struct {
-	postCRUD dao.PostCRUD
+	postCRUD posts_dao.PostCRUD
 }
 
 func InitPostService(db *sql.DB) *PostServiceImpl {
 	return &PostServiceImpl{
-		postCRUD: dao.NewPostDao(db),
+		postCRUD: posts_dao.NewPostDao(db),
+	}
+}
+
+func InitPostServiceInMemory(im *in_memory.InMemory) *PostServiceImpl {
+	return &PostServiceImpl{
+		postCRUD: posts_dao.NewPostDaoInMemory(im),
 	}
 }
 

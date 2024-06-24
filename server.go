@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -11,6 +13,7 @@ import (
 	"os"
 	generated "taskOzon/graph"
 	"taskOzon/internal/service"
+	"taskOzon/pkg/db/in_memory"
 	database "taskOzon/pkg/db/postgresql"
 	"time"
 )
@@ -24,16 +27,36 @@ func main() {
 		port = defaultPort
 	}
 
-	// Initialize the database
-	db := database.InitBD()
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Printf("Error closing database: %v", err)
-		}
-	}()
+	storageType := flag.String("storageType", "in_memory", "Storage type: In memory/PostgreSQL")
+	flag.Parse()
+	var resolver *generated.Resolver
+	switch *storageType {
+	case "in_memory":
+		// Initialize in-memory
+		users := make(map[int]in_memory.User)
+		posts := make(map[int]in_memory.Post)
+		comments := make(map[int]in_memory.Comment)
+		commentsParentsChild := make(map[int]in_memory.CommentParentChild)
+
+		inMemory := in_memory.InitInMemory(users, posts, comments, commentsParentsChild)
+
+		resolver = generated.NewResolver(service.InitPostServiceInMemory(inMemory), service.InitUserServiceInMemory(inMemory), service.InitCommentServiceInMemory(inMemory))
+	case "db":
+		// Initialize the database
+		db := database.InitBD()
+		defer func() {
+			if err := db.Close(); err != nil {
+				log.Printf("Error closing database: %v", err)
+			}
+		}()
+
+		resolver = generated.NewResolver(service.InitPostService(db), service.InitUserService(db), service.InitCommentService(db))
+
+	default:
+		fmt.Println("Invalid storage type!")
+	}
 
 	// Create a new resolver and pass the database connection if needed
-	resolver := generated.NewResolver(service.InitPostService(db), service.InitUserService(db), service.InitCommentService(db))
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	srv.AddTransport(transport.Websocket{

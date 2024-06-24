@@ -1,4 +1,4 @@
-package dao
+package posts_dao
 
 import (
 	"context"
@@ -6,14 +6,6 @@ import (
 	"fmt"
 	"taskOzon/graph/model"
 )
-
-type PostCRUD interface {
-	AddPost(ctx context.Context, title string, content string, authorID int, commentsAllowed bool) (int, error)
-	GetPost(ctx context.Context, postID int) (*model.Post, error)
-	GetPosts(ctx context.Context, page int, itemsByPage int /*, strategy models.Strategy*/) ([]*model.Post, error)
-	ChangeCommentsAllowed(ctx context.Context, postID int, commentsAllowed bool) (int, error)
-	DeletePost(ctx context.Context, postID int) (int, error)
-}
 
 type PostDAO struct {
 	DB *sql.DB
@@ -83,7 +75,7 @@ func (dao *PostDAO) ChangeCommentsAllowed(ctx context.Context, postID int, comme
 }
 
 func (dao *PostDAO) DeletePost(ctx context.Context, postID int) (int, error) {
-	query := `DELETE FROM posts WHERE id = $1`
+	query := `UPDATE posts SET title = 'Deleted post' WHERE id = $1 RETURNING id`
 	_, err := dao.DB.ExecContext(ctx, query, postID)
 	if err != nil {
 		return postID, fmt.Errorf("error deleting post: %v", err)

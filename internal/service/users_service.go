@@ -3,16 +3,23 @@ package service
 import (
 	"context"
 	"database/sql"
-	"taskOzon/internal/dao"
+	"taskOzon/internal/dao/users_dao"
+	"taskOzon/pkg/db/in_memory"
 )
 
 type UserServiceImpl struct {
-	userCRUD dao.UserCRUD
+	userCRUD users_dao.UserCRUD
 }
 
 func InitUserService(db *sql.DB) *UserServiceImpl {
 	return &UserServiceImpl{
-		userCRUD: dao.NewUserDao(db),
+		userCRUD: users_dao.NewUserDao(db),
+	}
+}
+
+func InitUserServiceInMemory(im *in_memory.InMemory) *UserServiceImpl {
+	return &UserServiceImpl{
+		userCRUD: users_dao.NewUserDaoInMemory(im),
 	}
 }
 

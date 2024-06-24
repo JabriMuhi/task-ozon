@@ -4,16 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"taskOzon/graph/model"
-	"taskOzon/internal/dao"
+	"taskOzon/internal/dao/comments_dao"
+	"taskOzon/pkg/db/in_memory"
 )
 
 type CommentServiceImpl struct {
-	commentCRUD dao.CommentCRUD
+	commentCRUD comments_dao.CommentCRUD
 }
 
 func InitCommentService(db *sql.DB) *CommentServiceImpl {
 	return &CommentServiceImpl{
-		commentCRUD: dao.NewCommentDao(db),
+		commentCRUD: comments_dao.NewCommentDao(db),
+	}
+}
+
+func InitCommentServiceInMemory(im *in_memory.InMemory) *CommentServiceImpl {
+	return &CommentServiceImpl{
+		commentCRUD: comments_dao.NewCommentDaoInMemory(im),
 	}
 }
 
