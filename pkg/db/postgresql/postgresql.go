@@ -23,11 +23,6 @@ func InitBD() *sql.DB {
 		log.Fatal(err)
 	}
 
-	//a := db.QueryRow("SELECT text FROM public.comments LIMIT 1")
-	//var k string
-	//a.Scan(&k)
-	//fmt.Println(k)
-
 	err = db.Ping()
 	if err != nil {
 		log.Fatal(err)

@@ -3,12 +3,12 @@
 package model
 
 type Comment struct {
-	ID       int        `json:"id"`
-	PostID   int        `json:"postId"`
-	ParentID *int       `json:"parentId,omitempty"`
-	Content  string     `json:"content"`
-	Author   *User      `json:"author"`
-	Children []*Comment `json:"children,omitempty"`
+	ID       int    `json:"id"`
+	PostID   int    `json:"postId"`
+	ParentID *int   `json:"parentId,omitempty"`
+	Content  string `json:"content"`
+	Author   *User  `json:"author"`
+	Level    int    `json:"level"`
 }
 
 type Link struct {

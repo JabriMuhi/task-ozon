@@ -22,7 +22,6 @@ type CommentService interface {
 	AddReply(ctx context.Context, text string, userID int, parentCommentID int) (int, error)
 	GetPostComments(ctx context.Context, postID int, startLevel int, lastLevel int, limit int) ([]model.Comment, error)
 	GetChildrenComments(ctx context.Context, parentCommentID int, startLevel int, lastLevel int, limit int) ([]model.Comment, error)
-	EditComment(ctx context.Context, commentID int, text string) (int, error)
 	DeleteComment(ctx context.Context, commentID int) (int, error)
 }
 
@@ -39,11 +38,9 @@ func (c *CommentServiceImpl) GetPostComments(ctx context.Context, postID int, st
 }
 
 func (c *CommentServiceImpl) GetChildrenComments(ctx context.Context, parentCommentID int, startLevel int, lastLevel int, limit int) ([]model.Comment, error) {
-	return nil, nil
+	return c.commentCRUD.GetChildrenComments(ctx, parentCommentID, startLevel, lastLevel, limit)
 }
-func (c *CommentServiceImpl) EditComment(ctx context.Context, commentID int, text string) (int, error) {
-	return 1, nil
-}
+
 func (c *CommentServiceImpl) DeleteComment(ctx context.Context, commentID int) (int, error) {
-	return 1, nil
+	return c.commentCRUD.DeleteComment(ctx, commentID)
 }

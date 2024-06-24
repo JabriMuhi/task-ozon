@@ -23,7 +23,7 @@ resolver:
   dir: graph
   package: graph
   filename_template: "{name}.resolvers.go"
-  # Optional: turn on to not generate template comments above resolvers
+  # Optional: turn on to not generate template comments_dao above resolvers
   # omit_template_comment: false
 
 # Optional: turn on use ` + "`" + `gqlgen:"fieldName"` + "`" + ` tags in your models
@@ -38,7 +38,7 @@ resolver:
 # Optional: turn on to skip generation of ComplexityRoot struct content and Complexity function
 # omit_complexity: false
 
-# Optional: turn on to not generate any file notice comments in generated files
+# Optional: turn on to not generate any file notice comments_dao in generated files
 # omit_gqlgen_file_notice: false
 
 # Optional: turn on to exclude the gqlgen version in the generated file notice. No effect if `omit_gqlgen_file_notice` is true.

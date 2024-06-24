@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"log"
 	"taskOzon/graph/model"
 )
 
@@ -36,6 +37,11 @@ func (r *mutationResolver) ChangeCommentsAllowed(ctx context.Context, postID int
 // DeletePost is the resolver for the deletePost field.
 func (r *mutationResolver) DeletePost(ctx context.Context, postID int) (int, error) {
 	return r.PostService.DeletePost(ctx, postID)
+}
+
+// DeleteComment is the resolver for the deleteComment field.
+func (r *mutationResolver) DeleteComment(ctx context.Context, commentID int) (int, error) {
+	return r.CommentService.DeleteComment(ctx, commentID)
 }
 
 // AddComment is the resolver for the addComment field.
@@ -93,16 +99,24 @@ func (r *queryResolver) GetPostComments(ctx context.Context, postID int, startLe
 
 // GetChildrenComments is the resolver for the getChildrenComments field.
 func (r *queryResolver) GetChildrenComments(ctx context.Context, parentCommentID int, startLevel int, lastLevel int, limit int) ([]*model.Comment, error) {
+	log.Printf("Fetching children comments_dao for parentCommentID=%d, startLevel=%d, lastLevel=%d, limit=%d", parentCommentID, startLevel, lastLevel, limit)
+
 	c, err := r.CommentService.GetChildrenComments(ctx, parentCommentID, startLevel, lastLevel, limit)
 	if err != nil {
+		log.Printf("Error fetching children comments_dao: %v", err)
 		return nil, err
 	}
 
+	log.Printf("Comments received from service: %+v", c)
+
 	resp := make([]*model.Comment, 0)
 
-	for key, _ := range c {
+	for key := range c {
+		log.Printf("Appending comment: %+v", c[key])
 		resp = append(resp, &c[key])
 	}
+
+	log.Printf("Fetched comments_dao response: %+v", resp)
 
 	return resp, nil
 }

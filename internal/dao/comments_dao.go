@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"taskOzon/graph/model"
 )
 
@@ -12,7 +13,6 @@ type CommentCRUD interface {
 	AddReply(ctx context.Context, text string, userID int, parentCommentID int) (int, error)
 	GetPostComments(ctx context.Context, postID int, startLevel int, lastLevel int, limit int) ([]model.Comment, error)
 	GetChildrenComments(ctx context.Context, parentCommentID int, startLevel int, lastLevel int, limit int) ([]model.Comment, error)
-	EditComment(ctx context.Context, commentID int, text string) (int, error)
 	DeleteComment(ctx context.Context, commentID int) (int, error)
 }
 
@@ -72,7 +72,7 @@ func (dao *CommentDAO) AddReply(ctx context.Context, text string, userID int, pa
 }
 
 func (dao *CommentDAO) GetPostComments(ctx context.Context, postID int, startLevel int, lastLevel int, limit int) ([]model.Comment, error) {
-	query := `SELECT c.user_id, c.text
+	query := `SELECT c.user_id, c.text, p.level
 FROM
     public.comments AS c
         JOIN public.comments_parent_childs_ids p ON c.id = p.children_id and p.level >= $1 and p.level <= $2
@@ -88,7 +88,7 @@ WHERE
 	for rows.Next() {
 		comment := model.Comment{Author: &model.User{}}
 
-		err = rows.Scan(&comment.Author.ID, &comment.Content)
+		err = rows.Scan(&comment.Author.ID, &comment.Content, &comment.Level)
 
 		if err != nil {
 			return nil, err
@@ -101,7 +101,7 @@ WHERE
 }
 
 func (dao *CommentDAO) GetChildrenComments(ctx context.Context, parentCommentID int, startLevel int, lastLevel int, limit int) ([]model.Comment, error) {
-	query := `SELECT c.user_id, c.text
+	query := `SELECT c.id, c.text, c.user_id, p.level
 FROM
     public.comments AS c
         JOIN public.comments_parent_childs_ids p ON c.id = p.children_id AND p.level >= $1 AND p.level <= $2
@@ -110,31 +110,37 @@ WHERE
 ORDER BY p.level
 LIMIT $4;`
 
-	rows, err := dao.DB.QueryContext(ctx, query, startLevel, lastLevel, parentCommentID, limit)
+	rows, err := dao.DB.Query(query, startLevel, lastLevel, parentCommentID, limit)
 	if err != nil {
-		return nil, fmt.Errorf("error querying children comments: %v", err)
+		return nil, err
 	}
-	defer rows.Close()
 
 	var comments []model.Comment
 	for rows.Next() {
 		comment := model.Comment{Author: &model.User{}}
-		err := rows.Scan(&comment.Author.ID, &comment.Content)
-		if err != nil {
-			return nil, fmt.Errorf("error scanning comment: %v", err)
-		}
-		comments = append(comments, comment)
-	}
+		log.Printf(comment.Content)
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error in rows iteration: %v", err)
+		err = rows.Scan(&comment.ID, &comment.Content, &comment.Author.ID, &comment.Level)
+
+		if err != nil {
+			return nil, err
+		}
+
+		comments = append(comments, comment)
 	}
 
 	return comments, nil
 }
-func (dao *CommentDAO) EditComment(ctx context.Context, commentID int, text string) (int, error) {
-	return 1, nil
-}
+
 func (dao *CommentDAO) DeleteComment(ctx context.Context, commentID int) (int, error) {
-	return 1, nil
+	query := `UPDATE comments SET text = 'Deleted comment' WHERE id = $1 RETURNING id`
+
+	var comment model.Comment
+	err := dao.DB.QueryRowContext(ctx, query, commentID).Scan(&comment.ID)
+
+	if err != nil {
+		return commentID, fmt.Errorf("error deleting comment: %v", err)
+	}
+
+	return comment.ID, nil
 }

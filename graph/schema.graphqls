@@ -24,6 +24,7 @@ type Mutation {
   addPost(title: String!, content: String!, commentsAllowed: Boolean!, userId: Int!): Int!
   changeCommentsAllowed(postId: Int!, commentsAllowed: Boolean!): Int!
   deletePost(postId: Int!): Int!
+  deleteComment(commentId: Int!): Int!
   addComment(postId: Int!, content: String!, userId: Int!): Int!
   addReply(postId: Int!, parentCommentId: Int, userId: Int!, content: String!): Int!
 }
@@ -48,7 +49,7 @@ type Comment {
   parentId: Int
   content: String!
   author: User!
-  children: [Comment]
+  level: Int!
 }
 
 type Subscription {
