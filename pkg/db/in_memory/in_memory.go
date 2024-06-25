@@ -68,10 +68,10 @@ type InMemory struct {
 	Users               map[int]User
 	Posts               map[int]Post
 	Comments            map[int]Comment
-	CommentsParentChild map[int]CommentParentChild
+	CommentsParentChild []CommentParentChild
 }
 
-func InitInMemory(users map[int]User, posts map[int]Post, comments map[int]Comment, commentsParentChild map[int]CommentParentChild) *InMemory {
+func InitInMemory(users map[int]User, posts map[int]Post, comments map[int]Comment, commentsParentChild []CommentParentChild) *InMemory {
 	return &InMemory{
 		Users:               users,
 		Posts:               posts,

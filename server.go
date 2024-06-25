@@ -36,7 +36,7 @@ func main() {
 		users := make(map[int]in_memory.User)
 		posts := make(map[int]in_memory.Post)
 		comments := make(map[int]in_memory.Comment)
-		commentsParentsChild := make(map[int]in_memory.CommentParentChild)
+		commentsParentsChild := make([]in_memory.CommentParentChild, 0)
 
 		inMemory := in_memory.InitInMemory(users, posts, comments, commentsParentsChild)
 
