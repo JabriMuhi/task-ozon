@@ -39,5 +39,12 @@ func (dao *UserDAOInMemory) GetUser(ctx context.Context, userID int) (string, er
 }
 
 func (dao *UserDAOInMemory) DeleteUser(ctx context.Context, userID int) (int, error) {
-	return 1, nil
+	user, ok := dao.IM.Users[userID]
+
+	if !ok {
+		return 0, errors.New("bad user id")
+	}
+	user.Username = "Deleted user"
+
+	return user.Id, nil
 }

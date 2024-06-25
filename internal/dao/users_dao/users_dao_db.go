@@ -37,7 +37,7 @@ func (dao *UserDAO) GetUser(ctx context.Context, userID int) (string, error) {
 }
 
 func (dao *UserDAO) DeleteUser(ctx context.Context, userID int) (int, error) {
-	query := "DELETE FROM users WHERE id = $1"
+	query := "UPDATE users SET username = 'Deleted user' WHERE id = $1 RETURNING id"
 	_, err := dao.DB.ExecContext(ctx, query, userID)
 	if err != nil {
 		return userID, fmt.Errorf("error deleting user: %v", err)

@@ -22,10 +22,6 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, userID int) (int, err
 
 // AddPost is the resolver for the addPost field.
 func (r *mutationResolver) AddPost(ctx context.Context, title string, content string, commentsAllowed bool, userID int) (int, error) {
-	//postService := service.InitPostService()
-	//postDao := dao.NewPostDao(r.DB)
-	//post, _ := postDao.GetPost(ctx, uint32(postID))
-	//return &post, nil
 	return r.PostService.AddPost(ctx, title, content, userID, commentsAllowed)
 }
 
