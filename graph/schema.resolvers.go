@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"log"
 	"taskOzon/graph/model"
 )
@@ -42,11 +43,17 @@ func (r *mutationResolver) DeleteComment(ctx context.Context, commentID int) (in
 
 // AddComment is the resolver for the addComment field.
 func (r *mutationResolver) AddComment(ctx context.Context, postID int, content string, userID int) (int, error) {
-	return r.CommentService.AddComment(ctx, content, postID, userID)
+	if len(content) > 2000 {
+		return 0, errors.New("invalid content length! max length 2000 chars")
+	}
+	return r.CommentService.AddComment(ctx, content, userID, postID)
 }
 
 // AddReply is the resolver for the addReply field.
 func (r *mutationResolver) AddReply(ctx context.Context, postID int, parentCommentID *int, userID int, content string) (int, error) {
+	if len(content) > 2000 {
+		return 0, errors.New("invalid content length! max length 2000 chars")
+	}
 	return r.CommentService.AddReply(ctx, content, userID, *parentCommentID)
 }
 

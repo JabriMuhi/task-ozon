@@ -17,6 +17,16 @@ func NewCommentDaoInMemory(IM *in_memory.InMemory) *CommentDAOInMemory {
 }
 
 func (dao *CommentDAOInMemory) AddComment(ctx context.Context, text string, userID int, postID int) (int, error) {
+	user, ok := dao.IM.Users[userID]
+	if !ok || user.Username == "Deleted user" {
+		return 0, errors.New("bad user id or user deleted")
+	}
+
+	post, ok := dao.IM.Posts[postID]
+	if !ok || post.Title == "Deleted post" {
+		return 0, errors.New("bad post id or post deleted")
+	}
+
 	dao.IM.Comments[len(dao.IM.Comments)] = *in_memory.NewComment(len(dao.IM.Comments), postID, userID, text)
 
 	dao.IM.CommentsParentChild = append(dao.IM.CommentsParentChild, *in_memory.NewCommentParentChild(len(dao.IM.Comments)-1, len(dao.IM.Comments)-1, 0))
@@ -24,6 +34,11 @@ func (dao *CommentDAOInMemory) AddComment(ctx context.Context, text string, user
 }
 
 func (dao *CommentDAOInMemory) AddReply(ctx context.Context, text string, userID int, parentCommentId int) (int, error) {
+	user, ok := dao.IM.Users[userID]
+	if !ok || user.Username == "Deleted user" {
+		return 0, errors.New("bad user id or user deleted")
+	}
+
 	dao.IM.Comments[len(dao.IM.Comments)] = *in_memory.NewComment(len(dao.IM.Comments), -1, userID, text)
 
 	dao.IM.CommentsParentChild = append(dao.IM.CommentsParentChild, *in_memory.NewCommentParentChild(len(dao.IM.Comments)-1, len(dao.IM.Comments)-1, 0))

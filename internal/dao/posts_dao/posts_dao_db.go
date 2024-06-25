@@ -3,6 +3,7 @@ package posts_dao
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"taskOzon/graph/model"
 )
@@ -16,9 +17,16 @@ func NewPostDao(DB *sql.DB) *PostDAO {
 }
 
 func (dao *PostDAO) AddPost(ctx context.Context, title string, content string, authorID int, commentsAllowed bool) (int, error) {
-	query := `INSERT INTO posts (title, content, author_id, comments_allowed) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := "SELECT username FROM users WHERE id = $1"
+	var user model.User
+	err := dao.DB.QueryRowContext(ctx, query, authorID).Scan(&user.Username)
+	if err != nil {
+		return 0, errors.New("bad user id or deleted user")
+	}
+
+	query = `INSERT INTO posts (title, content, author_id, comments_allowed) VALUES ($1, $2, $3, $4) RETURNING id`
 	var postID int
-	err := dao.DB.QueryRowContext(ctx, query, title, content, authorID, commentsAllowed).Scan(&postID)
+	err = dao.DB.QueryRowContext(ctx, query, title, content, authorID, commentsAllowed).Scan(&postID)
 	if err != nil {
 		return postID, fmt.Errorf("error inserting post: %v", err)
 	}
@@ -30,7 +38,7 @@ func (dao *PostDAO) GetPost(ctx context.Context, postID int) (*model.Post, error
 	var post model.Post
 	post.Author = &model.User{}
 	err := dao.DB.QueryRowContext(ctx, query, postID).Scan(&post.ID, &post.Title, &post.Content, &post.Author.ID, &post.CommentsAllowed, &post.Author.Username)
-	if err != nil {
+	if err != nil || post.Title == "Deleted post" {
 		return &post, fmt.Errorf("error fetching post: %v", err)
 	}
 	return &post, nil
@@ -54,6 +62,10 @@ func (dao *PostDAO) GetPosts(ctx context.Context, page int, itemsByPage int) ([]
 		if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.Author.ID, &post.CommentsAllowed, &post.Author.Username); err != nil {
 			return nil, fmt.Errorf("error scanning post: %v", err)
 		}
+
+		if post.Title == "Deleted post" {
+			continue
+		}
 		posts = append(posts, &post)
 	}
 
@@ -65,7 +77,7 @@ func (dao *PostDAO) GetPosts(ctx context.Context, page int, itemsByPage int) ([]
 }
 
 func (dao *PostDAO) ChangeCommentsAllowed(ctx context.Context, postID int, commentsAllowed bool) (int, error) {
-	query := "UPDATE posts SET comments_allowed = $2 WHERE id = $1"
+	query := "UPDATE posts SET comments_allowed = $2 WHERE id = $1 and title != 'Deleted post'"
 
 	_, err := dao.DB.ExecContext(ctx, query, postID, commentsAllowed)
 	if err != nil {

@@ -3,6 +3,7 @@ package comments_dao
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"taskOzon/graph/model"
@@ -17,17 +18,29 @@ func NewCommentDao(DB *sql.DB) *CommentDAO {
 }
 
 func (dao *CommentDAO) AddComment(ctx context.Context, text string, userID int, postID int) (int, error) {
+	queryUserCheck := "SELECT username FROM users WHERE id = $1"
+	var user model.User
+	err := dao.DB.QueryRowContext(ctx, queryUserCheck, userID).Scan(&user.Username)
+	if err != nil || user.Username == "Deleted user" {
+		return 0, errors.New("bad user id or deleted user")
+	}
+
+	queryPostCheck := `SELECT p.id, title, content, author_id, comments_allowed, u.username FROM posts p INNER JOIN users u ON p.author_id = u.id WHERE p.id = $1`
+	var post model.Post
+	post.Author = &model.User{}
+	err = dao.DB.QueryRowContext(ctx, queryPostCheck, postID).Scan(&post.ID, &post.Title, &post.Content, &post.Author.ID, &post.CommentsAllowed, &post.Author.Username)
+	if err != nil || post.Title == "Deleted post" {
+		return 0, errors.New("bad post id or deleted post")
+	}
+
 	query := `INSERT INTO comments (text, user_id, post_id) VALUES ($1, $2, $3) RETURNING id`
-
 	var commentID int
-
-	err := dao.DB.QueryRowContext(ctx, query, text, userID, postID).Scan(&commentID)
+	err = dao.DB.QueryRowContext(ctx, query, text, userID, postID).Scan(&commentID)
 	if err != nil {
 		return commentID, fmt.Errorf("error inserting comment: %v", err)
 	}
 
 	addChildQuery := `INSERT INTO comments_parent_childs_ids (parent_id, children_id, level) VALUES ($1, $1, 0)`
-
 	_, err = dao.DB.Query(addChildQuery, commentID)
 	if err != nil {
 		return 0, err
@@ -37,11 +50,20 @@ func (dao *CommentDAO) AddComment(ctx context.Context, text string, userID int, 
 }
 
 func (dao *CommentDAO) AddReply(ctx context.Context, text string, userID int, parentCommentId int) (int, error) {
+
+	queryUserCheck := "SELECT username FROM users WHERE id = $1"
+	var user model.User
+
+	err := dao.DB.QueryRowContext(ctx, queryUserCheck, userID).Scan(&user.Username)
+	if err != nil || user.Username == "Deleted user" {
+		return 0, errors.New("bad user id")
+	}
+
 	addQuery := `INSERT INTO comments (text, user_id) VALUES ($1, $2) RETURNING id`
 
 	var commentID int
 
-	err := dao.DB.QueryRowContext(ctx, addQuery, text, userID).Scan(&commentID)
+	err = dao.DB.QueryRowContext(ctx, addQuery, text, userID).Scan(&commentID)
 	if err != nil {
 		return commentID, fmt.Errorf("error inserting comment: %v", err)
 	}
@@ -86,6 +108,9 @@ WHERE
 			return nil, err
 		}
 
+		if comment.Content == "Deleted comment" {
+			continue
+		}
 		comments = append(comments, comment)
 	}
 

@@ -27,7 +27,7 @@ func main() {
 		port = defaultPort
 	}
 
-	storageType := flag.String("storageType", "in_memory", "Storage type: In memory/PostgreSQL")
+	storageType := flag.String("storageType", "db", "Storage type: In memory/PostgreSQL")
 	flag.Parse()
 	var resolver *generated.Resolver
 	switch *storageType {
