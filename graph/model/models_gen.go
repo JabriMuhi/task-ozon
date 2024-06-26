@@ -11,13 +11,6 @@ type Comment struct {
 	Level    int    `json:"level"`
 }
 
-type Link struct {
-	ID      int    `json:"id"`
-	Title   string `json:"title"`
-	Address string `json:"address"`
-	User    *User  `json:"user"`
-}
-
 type Mutation struct {
 }
 

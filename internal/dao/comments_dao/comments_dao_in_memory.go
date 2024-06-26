@@ -30,6 +30,7 @@ func (dao *CommentDAOInMemory) AddComment(ctx context.Context, text string, user
 	dao.IM.Comments[len(dao.IM.Comments)] = *in_memory.NewComment(len(dao.IM.Comments), postID, userID, text)
 
 	dao.IM.CommentsParentChild = append(dao.IM.CommentsParentChild, *in_memory.NewCommentParentChild(len(dao.IM.Comments)-1, len(dao.IM.Comments)-1, 0))
+
 	return len(dao.IM.Comments) - 1, nil
 }
 

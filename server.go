@@ -48,10 +48,8 @@ func main() {
 	storageType := flag.String("storageType", "db", "Storage type: in_memory/db")
 	flag.Parse()
 
-	fmt.Println(*storageType)
-
 	var resolver *generated.Resolver
-	subscriptionMap := make(map[int][]chan<- model.Comment)
+
 	switch *storageType {
 	case "in_memory":
 		// Initialize in-memory
@@ -59,6 +57,8 @@ func main() {
 		posts := make(map[int]in_memory.Post)
 		comments := make(map[int]in_memory.Comment)
 		commentsParentsChild := make([]in_memory.CommentParentChild, 0)
+
+		subscriptionMap := make(map[int][]chan<- *model.Comment)
 
 		inMemory := in_memory.InitInMemory(users, posts, comments, commentsParentsChild)
 
@@ -71,6 +71,8 @@ func main() {
 				log.Printf("Error closing database: %v", err)
 			}
 		}()
+
+		subscriptionMap := make(map[int][]chan<- *model.Comment)
 
 		resolver = generated.NewResolver(service.InitPostService(db), service.InitUserService(db), service.InitCommentService(db, subscriptionMap))
 

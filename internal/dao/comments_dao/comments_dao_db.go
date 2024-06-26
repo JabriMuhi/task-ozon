@@ -19,14 +19,18 @@ func NewCommentDao(DB *sql.DB) *CommentDAO {
 
 func (dao *CommentDAO) AddComment(ctx context.Context, text string, userID int, postID int) (int, error) {
 	queryUserCheck := "SELECT username FROM users WHERE id = $1"
+
 	var user model.User
+
 	err := dao.DB.QueryRowContext(ctx, queryUserCheck, userID).Scan(&user.Username)
 	if err != nil || user.Username == "Deleted user" {
 		return 0, errors.New("bad user id or deleted user")
 	}
 
 	queryPostCheck := `SELECT p.id, title, content, author_id, comments_allowed, u.username FROM posts p INNER JOIN users u ON p.author_id = u.id WHERE p.id = $1`
+
 	var post model.Post
+
 	post.Author = &model.User{}
 	err = dao.DB.QueryRowContext(ctx, queryPostCheck, postID).Scan(&post.ID, &post.Title, &post.Content, &post.Author.ID, &post.CommentsAllowed, &post.Author.Username)
 	if err != nil || post.Title == "Deleted post" {
@@ -34,13 +38,16 @@ func (dao *CommentDAO) AddComment(ctx context.Context, text string, userID int, 
 	}
 
 	query := `INSERT INTO comments (text, user_id, post_id) VALUES ($1, $2, $3) RETURNING id`
+
 	var commentID int
+
 	err = dao.DB.QueryRowContext(ctx, query, text, userID, postID).Scan(&commentID)
 	if err != nil {
 		return commentID, fmt.Errorf("error inserting comment: %v", err)
 	}
 
 	addChildQuery := `INSERT INTO comments_parent_childs_ids (parent_id, children_id, level) VALUES ($1, $1, 0)`
+
 	_, err = dao.DB.Query(addChildQuery, commentID)
 	if err != nil {
 		return 0, err
@@ -50,8 +57,8 @@ func (dao *CommentDAO) AddComment(ctx context.Context, text string, userID int, 
 }
 
 func (dao *CommentDAO) AddReply(ctx context.Context, text string, userID int, parentCommentId int) (int, error) {
-
 	queryUserCheck := "SELECT username FROM users WHERE id = $1"
+
 	var user model.User
 
 	err := dao.DB.QueryRowContext(ctx, queryUserCheck, userID).Scan(&user.Username)
@@ -99,6 +106,7 @@ WHERE
 	}
 
 	var comments []model.Comment
+
 	for rows.Next() {
 		comment := model.Comment{Author: &model.User{}}
 
@@ -111,6 +119,7 @@ WHERE
 		if comment.Content == "Deleted comment" {
 			continue
 		}
+
 		comments = append(comments, comment)
 	}
 
@@ -133,8 +142,10 @@ LIMIT $4;`
 	}
 
 	var comments []model.Comment
+
 	for rows.Next() {
 		comment := model.Comment{Author: &model.User{}}
+
 		log.Printf(comment.Content)
 
 		err = rows.Scan(&comment.ID, &comment.Content, &comment.Author.ID, &comment.Level)
@@ -153,6 +164,7 @@ func (dao *CommentDAO) DeleteComment(ctx context.Context, commentID int) (int, e
 	query := `UPDATE comments SET text = 'Deleted comment' WHERE id = $1 RETURNING id`
 
 	var comment model.Comment
+
 	err := dao.DB.QueryRowContext(ctx, query, commentID).Scan(&comment.ID)
 
 	if err != nil {

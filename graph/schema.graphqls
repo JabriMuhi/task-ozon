@@ -1,12 +1,4 @@
-type Link {
-  id: Int!
-  title: String!
-  address: String!
-  user: User!
-}
-
 type Query {
-  links: [Link!]!
   getPost(postId: Int!): Post
   getPosts(page: Int!, itemsByPage: Int!): [Post]
   getUser(userId: Int!): String!
@@ -15,12 +7,8 @@ type Query {
 }
 
 type Mutation {
-  #createLink(input: NewLink!): Link!
   addUser(username: String!, password: String!, email: String!): Int!
   deleteUser(userId: Int!): Int!
-  #login(input: Login!): String!
-  # we'll talk about this in authentication section
-  # refreshToken(input: RefreshTokenInput!): String!
   addPost(title: String!, content: String!, commentsAllowed: Boolean!, userId: Int!): Int!
   changeCommentsAllowed(postId: Int!, commentsAllowed: Boolean!): Int!
   deletePost(postId: Int!): Int!

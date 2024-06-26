@@ -1,17 +1,12 @@
-# Указываем базовый образ
 FROM golang:1.22-alpine
 
-# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем файлы go.mod и go.sum
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Копируем остальные файлы
 COPY . .
 
-# Устанавливаем переменные окружения
 ARG DB_HOST
 ARG DB_PORT
 ARG DB_USER
@@ -28,16 +23,12 @@ ENV DB_NAME=${DB_NAME}
 ENV STORAGE_TYPE=${STORAGE_TYPE}
 ENV PORT=${PORT}
 
-# Компилируем Go-приложение
 RUN go build -o server ./server.go
 
 RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
-# Копируем скрипт запуска
 COPY ./docker/entrypoint.sh /app/entrypoint.sh
 
-# Делаем скрипт исполняемым
 RUN chmod +x /app/entrypoint.sh
 
-# Указываем точку входа
 ENTRYPOINT ["/app/entrypoint.sh"]

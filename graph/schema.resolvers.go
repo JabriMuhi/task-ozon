@@ -46,6 +46,7 @@ func (r *mutationResolver) AddComment(ctx context.Context, postID int, content s
 	if len(content) > 2000 {
 		return 0, errors.New("invalid content length! max length 2000 chars")
 	}
+
 	return r.CommentService.AddComment(ctx, content, userID, postID)
 }
 
@@ -54,19 +55,8 @@ func (r *mutationResolver) AddReply(ctx context.Context, postID int, parentComme
 	if len(content) > 2000 {
 		return 0, errors.New("invalid content length! max length 2000 chars")
 	}
-	return r.CommentService.AddReply(ctx, content, userID, *parentCommentID)
-}
 
-// Links is the resolver for the links field.
-func (r *queryResolver) Links(ctx context.Context) ([]*model.Link, error) {
-	var links []*model.Link
-	dummyLink := model.Link{
-		Title:   "our dummy link",
-		Address: "https://address.org",
-		User:    &model.User{Username: "admin"},
-	}
-	links = append(links, &dummyLink)
-	return links, nil
+	return r.CommentService.AddReply(ctx, content, userID, *parentCommentID)
 }
 
 // GetPost is the resolver for the getPost field.
@@ -126,26 +116,9 @@ func (r *queryResolver) GetChildrenComments(ctx context.Context, parentCommentID
 
 // CommentAdded is the resolver for the commentAdded field.
 func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID int) (<-chan *model.Comment, error) {
-	//channel, _ := r.CommentService.NewSubscriber(ctx, postID)
-	var tradeChannel = make(chan *model.Comment, 1)
+	channel, _ := r.CommentService.NewSubscriber(ctx, postID)
 
-	// context done check
-	go func() {
-		<-ctx.Done()
-	}()
-
-	// run a concurrent routine to send the data to subscribed client
-	//go func(tradeChannel chan *model.Comment) {
-	//	ticker := time.NewTicker(1 * time.Second)
-	//	for {
-	//		select {
-	//		case <-ticker.C:
-	//			tradeChannel <- r.GenerateTradeData()
-	//		}
-	//	}
-	//}(tradeChannel)
-
-	return tradeChannel, nil
+	return channel, nil
 }
 
 // Mutation returns MutationResolver implementation.

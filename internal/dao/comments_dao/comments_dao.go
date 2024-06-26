@@ -5,8 +5,6 @@ import (
 	"taskOzon/graph/model"
 )
 
-// minimock -i internal/dao/comments_dao.CommentCRUD -o ./internal/dao/comments_dao/comments_dao_mock.go
-
 type CommentCRUD interface {
 	AddComment(ctx context.Context, text string, userID int, postID int) (int, error)
 	AddReply(ctx context.Context, text string, userID int, parentCommentID int) (int, error)

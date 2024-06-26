@@ -11,16 +11,6 @@ type PostDAOInMemory struct {
 	IM *in_memory.InMemory
 }
 
-func NewPostModel(id int, title string, content string, author *model.User, commentsAllowed bool) *model.Post {
-	return &model.Post{
-		ID:              id,
-		Title:           title,
-		Content:         content,
-		Author:          author,
-		CommentsAllowed: commentsAllowed,
-	}
-}
-
 func NewPostDaoInMemory(IM *in_memory.InMemory) *PostDAOInMemory {
 	return &PostDAOInMemory{IM: IM}
 }
@@ -31,7 +21,9 @@ func (dao *PostDAOInMemory) AddPost(ctx context.Context, title string, content s
 	if !ok || author.Username == "Deleted user" {
 		return 0, errors.New("bad user id or deleted user")
 	}
+
 	dao.IM.Posts[len(dao.IM.Posts)] = *in_memory.NewPost(len(dao.IM.Posts), title, content, authorID, commentsAllowed)
+
 	return len(dao.IM.Posts) - 1, nil
 }
 
@@ -63,7 +55,9 @@ func (dao *PostDAOInMemory) GetPost(ctx context.Context, postID int) (*model.Pos
 
 func (dao *PostDAOInMemory) GetPosts(ctx context.Context, page int, itemsByPage int) ([]*model.Post, error) {
 	offset := (page - 1) * itemsByPage
+
 	response := make([]*model.Post, 0)
+
 	for i := offset; i < offset+itemsByPage; i++ {
 		post, err := dao.GetPost(ctx, i)
 
@@ -77,6 +71,7 @@ func (dao *PostDAOInMemory) GetPosts(ctx context.Context, page int, itemsByPage 
 
 		response = append(response, post)
 	}
+
 	return response, nil
 }
 
@@ -86,6 +81,7 @@ func (dao *PostDAOInMemory) ChangeCommentsAllowed(ctx context.Context, postID in
 	if !ok || post.Title == "Deleted post" {
 		return 0, errors.New("bad post id")
 	}
+
 	post.Comments_allowed = commentsAllowed
 
 	return post.Id, nil
@@ -97,6 +93,7 @@ func (dao *PostDAOInMemory) DeletePost(ctx context.Context, postID int) (int, er
 	if !ok {
 		return 0, errors.New("bad post id")
 	}
+
 	post.Title = "Deleted post"
 
 	return post.Id, nil
