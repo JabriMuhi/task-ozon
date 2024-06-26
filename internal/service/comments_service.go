@@ -9,18 +9,21 @@ import (
 )
 
 type CommentServiceImpl struct {
-	commentCRUD comments_dao.CommentCRUD
+	commentCRUD     comments_dao.CommentCRUD
+	subscriptionMap map[int][]chan<- model.Comment
 }
 
-func InitCommentService(db *sql.DB) *CommentServiceImpl {
+func InitCommentService(db *sql.DB, subMap map[int][]chan<- model.Comment) *CommentServiceImpl {
 	return &CommentServiceImpl{
-		commentCRUD: comments_dao.NewCommentDao(db),
+		commentCRUD:     comments_dao.NewCommentDao(db),
+		subscriptionMap: subMap,
 	}
 }
 
-func InitCommentServiceInMemory(im *in_memory.InMemory) *CommentServiceImpl {
+func InitCommentServiceInMemory(im *in_memory.InMemory, subMap map[int][]chan<- model.Comment) *CommentServiceImpl {
 	return &CommentServiceImpl{
-		commentCRUD: comments_dao.NewCommentDaoInMemory(im),
+		commentCRUD:     comments_dao.NewCommentDaoInMemory(im),
+		subscriptionMap: subMap,
 	}
 }
 
@@ -30,10 +33,25 @@ type CommentService interface {
 	GetPostComments(ctx context.Context, postID int, startLevel int, lastLevel int, limit int) ([]model.Comment, error)
 	GetChildrenComments(ctx context.Context, parentCommentID int, startLevel int, lastLevel int, limit int) ([]model.Comment, error)
 	DeleteComment(ctx context.Context, commentID int) (int, error)
+	NewSubscriber(ctx context.Context, postID int) (chan model.Comment, error)
 }
 
 func (c *CommentServiceImpl) AddComment(ctx context.Context, text string, userID int, postID int) (int, error) {
-	return c.commentCRUD.AddComment(ctx, text, userID, postID)
+	resp, err := c.commentCRUD.AddComment(ctx, text, userID, postID)
+	channels, ok := c.subscriptionMap[postID]
+	if ok {
+		for _, ch := range channels {
+			com := model.Comment{
+				ID:      resp,
+				PostID:  postID,
+				Content: text,
+				Author:  &model.User{ID: userID},
+			}
+
+			ch <- com
+		}
+	}
+	return resp, err
 }
 
 func (c *CommentServiceImpl) AddReply(ctx context.Context, text string, userID int, parentCommentID int) (int, error) {
@@ -50,4 +68,15 @@ func (c *CommentServiceImpl) GetChildrenComments(ctx context.Context, parentComm
 
 func (c *CommentServiceImpl) DeleteComment(ctx context.Context, commentID int) (int, error) {
 	return c.commentCRUD.DeleteComment(ctx, commentID)
+}
+func (c *CommentServiceImpl) NewSubscriber(ctx context.Context, postID int) (chan model.Comment, error) {
+	_, ok := c.subscriptionMap[postID]
+
+	if !ok {
+		c.subscriptionMap[postID] = make([]chan<- model.Comment, 0)
+	}
+	ch := make(chan model.Comment)
+	c.subscriptionMap[postID] = append(c.subscriptionMap[postID], ch)
+
+	return ch, nil
 }

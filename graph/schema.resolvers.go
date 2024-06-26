@@ -126,27 +126,26 @@ func (r *queryResolver) GetChildrenComments(ctx context.Context, parentCommentID
 
 // CommentAdded is the resolver for the commentAdded field.
 func (r *subscriptionResolver) CommentAdded(ctx context.Context, postID int) (<-chan *model.Comment, error) {
-	commentChan := make(chan *model.Comment)
+	//channel, _ := r.CommentService.NewSubscriber(ctx, postID)
+	var tradeChannel = make(chan *model.Comment, 1)
 
-	r.mu.Lock()
-	if _, ok := r.commentObservers[postID]; !ok {
-		r.commentObservers[postID] = make(map[chan *model.Comment]struct{})
-	}
-	r.commentObservers[postID][commentChan] = struct{}{}
-	r.mu.Unlock()
-
+	// context done check
 	go func() {
 		<-ctx.Done()
-		r.mu.Lock()
-		delete(r.commentObservers[postID], commentChan)
-		if len(r.commentObservers[postID]) == 0 {
-			delete(r.commentObservers, postID)
-		}
-		r.mu.Unlock()
-		close(commentChan)
 	}()
 
-	return commentChan, nil
+	// run a concurrent routine to send the data to subscribed client
+	//go func(tradeChannel chan *model.Comment) {
+	//	ticker := time.NewTicker(1 * time.Second)
+	//	for {
+	//		select {
+	//		case <-ticker.C:
+	//			tradeChannel <- r.GenerateTradeData()
+	//		}
+	//	}
+	//}(tradeChannel)
+
+	return tradeChannel, nil
 }
 
 // Mutation returns MutationResolver implementation.

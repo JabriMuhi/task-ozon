@@ -7,11 +7,13 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/websocket"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"log"
 	"net/http"
 	"os"
 	generated "taskOzon/graph"
+	"taskOzon/graph/model"
 	"taskOzon/internal/service"
 	"taskOzon/pkg/db/in_memory"
 	database "taskOzon/pkg/db/postgresql"
@@ -20,16 +22,36 @@ import (
 
 const defaultPort = "8080"
 
+func getEnv(key, fallback string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return fallback
+}
+
 func main() {
+
+	err := godotenv.Load("./docker/.env")
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
 
-	storageType := flag.String("storageType", "db", "Storage type: In memory/PostgreSQL")
+	fmt.Printf("Server started at port: %s \n", port)
+
+	fmt.Printf("Storage type is: %s \n", getEnv("STORAGE_TYPE", "in_memory"))
+
+	storageType := flag.String("storageType", "db", "Storage type: in_memory/db")
 	flag.Parse()
+
+	fmt.Println(*storageType)
+
 	var resolver *generated.Resolver
+	subscriptionMap := make(map[int][]chan<- model.Comment)
 	switch *storageType {
 	case "in_memory":
 		// Initialize in-memory
@@ -40,7 +62,7 @@ func main() {
 
 		inMemory := in_memory.InitInMemory(users, posts, comments, commentsParentsChild)
 
-		resolver = generated.NewResolver(service.InitPostServiceInMemory(inMemory), service.InitUserServiceInMemory(inMemory), service.InitCommentServiceInMemory(inMemory))
+		resolver = generated.NewResolver(service.InitPostServiceInMemory(inMemory), service.InitUserServiceInMemory(inMemory), service.InitCommentServiceInMemory(inMemory, subscriptionMap))
 	case "db":
 		// Initialize the database
 		db := database.InitBD()
@@ -50,13 +72,11 @@ func main() {
 			}
 		}()
 
-		resolver = generated.NewResolver(service.InitPostService(db), service.InitUserService(db), service.InitCommentService(db))
+		resolver = generated.NewResolver(service.InitPostService(db), service.InitUserService(db), service.InitCommentService(db, subscriptionMap))
 
 	default:
 		fmt.Println("Invalid storage type!")
 	}
-
-	// Create a new resolver and pass the database connection if needed
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	srv.AddTransport(transport.Websocket{
