@@ -45,7 +45,7 @@ func main() {
 
 	fmt.Printf("Storage type is: %s \n", getEnv("STORAGE_TYPE", "in_memory"))
 
-	storageType := flag.String("storageType", "db", "Storage type: in_memory/db")
+	storageType := flag.String("storageType", "in_memory", "Storage type: in_memory/db")
 	flag.Parse()
 
 	var resolver *generated.Resolver
